@@ -19,6 +19,10 @@ struct Point{
 	double x, y;
 };
 
+const int circleCenterX = VIEWPORT_MAX-100;
+const int circleCenterY = VIEWPORT_MAX-200;
+const int circleRadius = 60;
+
 //global variables
 vector<Point> myCircle;
 
@@ -36,7 +40,7 @@ void myInit(void)
 {
 	//set black background
 	glClearColor(0.0, 0.0, 0.0, 1.0);
-	glPointSize(1.0);
+	glPointSize(1.0); //IF I MAKE THIS LARGER WILL NUMBER OF POINTS DECREASE?
 	
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -107,7 +111,7 @@ void midpointCircle(int xCord, int yCord, int radius)
 		pointSymmetry(xCordD, yCordD, x, y);
 	}
 
-	cout << "FINISHED" << endl;
+	cout << myCircle.size()  << endl;
 	//cout << myCircle.size() << endl;
 
 }
@@ -126,20 +130,40 @@ void display(void)
 
 	glColor3f(0.0, 0.0, 1.0);
 	//put circle coordinate into constants 
-	midpointCircle(VIEWPORT_MAX-100, VIEWPORT_MAX-200, 50);	
+	midpointCircle(circleCenterX, circleCenterY, circleRadius);	
 	//draw the tree
-//	glColor3f(0.0f, 0.0f, 1.0f);
+	glColor3f(0.0, 0.0, 1.0);
+	glBegin(GL_LINES);
+		glVertex2i(circleCenterX+20, circleCenterY+15);
+		glVertex2i(circleCenterX-42, circleCenterY+42);
+	glEnd();
+	
+	glBegin(GL_LINES);
+		glVertex2i(circleCenterX+20, circleCenterY-15);
+		glVertex2i(circleCenterX-42, circleCenterY-42);
+	glEnd();
+
+	glBegin(GL_LINES);
+		glVertex2i(circleCenterX+20, circleCenterY+15);
+		glVertex2i(VIEWPORT_MIN+100, VIEWPORT_MAX-175);
+	glEnd();
+
+	glBegin(GL_LINES);
+		glVertex2i(circleCenterX+20, circleCenterY-15);
+		glVertex2i(VIEWPORT_MIN+100, VIEWPORT_MIN+160);
+	glEnd();
+	
+	glBegin(GL_LINES);
+		glVertex2i(VIEWPORT_MIN+100, VIEWPORT_MAX-175);
+		glVertex2i(VIEWPORT_MIN+100, VIEWPORT_MIN+160);
+	glEnd();
+	
 //	drawTree();
 	glFlush();
 }
 
 int main(int argc, char** argv)
 {
-	//glutInit(&argc, argv);
-	//glutInitDisplayMode(GLUT_SINGLE|GLUT_RGB); //change to double later
-	//glutInitWindowSize(WINDOW_MAX, WINDOW_MAX);
-	//glutInitWindowPosition(0,0);
-	//glutCreateWindow("Tree");
 	myglutInit(argc, argv);
 	myInit();
 	//add mouse and keyboard functions here
