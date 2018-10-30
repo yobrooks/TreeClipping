@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <vector>
-
+#include <math.h>
 using namespace std;
 
 //constants--MUST CHANGE BEFORE TURNING IN
@@ -20,12 +20,12 @@ struct Vertex{
 };
 
 struct Circle{
-	int numCircPoints=0;
+	//int numCircPoints=0;
 	vector<Vertex> myCircPoints;
 };
 
 struct BaseTree{
-	int numBasePoints=0;
+//	int numBasePoints=0;
 	vector<Vertex> myBasePoints;	
 };
 
@@ -36,9 +36,9 @@ struct Tree{
 
 
 
-const int circleCenterX = VIEWPORT_MAX-100;
-const int circleCenterY = VIEWPORT_MAX-200;
-const int circleRadius = 60;
+//const double circleCenterX = VIEWPORT_MAX-100;
+//const double circleCenterY = VIEWPORT_MAX-200;
+//const double circleRadius = 60;
 
 //global variables
 Circle circle;
@@ -78,8 +78,8 @@ void plotPoint(double x, double y)
 	vertex.z = 0;
 	vertex.w = 0;
 	
-	circle.myCirclePoints.push_back(vertex);
-
+	circle.myCircPoints.push_back(vertex);
+//	circle.numCircPoints ++;
 	//draw the point
 	glColor3f(0.0, 0.0, 1.0);
 	glBegin(GL_POINTS);
@@ -103,18 +103,16 @@ void pointSymmetry(double xCord, double yCord, double x, double y)
 
 //midpoint circle algorithm taken from pgs 150 - 153 of textbook 
 //change all to integers and convert to doubles at the end 
-void midpointCircle(int xCord, int yCord, int radius)
+void midpointCircle(double xCord, double yCord, double radius)
 {
-	double xCordD = (double) xCord;
-	double yCordD = (double) yCord;
 	double x, y;
 	x = 0;
-	y = (double) radius;
+	y = radius;
 
-	double p = (5/4) - (double)radius;
+	double p = (5/4) - radius;
 	
 	plotPoint(x, y);
-	pointSymmetry(xCordD, yCordD, x, y);
+	pointSymmetry(xCord, yCord, x, y);
 	
 	
 	while(x < y)
@@ -130,50 +128,53 @@ void midpointCircle(int xCord, int yCord, int radius)
 			y--;
 			p = p + 2*(x - y) +1;
 		}
-		pointSymmetry(xCordD, yCordD, x, y);
+		pointSymmetry(xCord, yCord, x, y);
 	}
-
-	cout << myCircle.size()  << endl;
-	//cout << myCircle.size() << endl;
-
 }
 
-void drawTree()
+void drawTreeLines(double x1, double y1, double x2, double y2)
 {
-	
+	Vertex vert1, vert2;
 	glColor3f(0.0, 0.0, 1.0);
-
-	midpointCircle(circleCenterX, circleCenterY, circleRadius);
-
-        glBegin(GL_LINES);
-                glVertex2i(circleCenterX+20, circleCenterY+15);
-                glVertex2i(circleCenterX-42, circleCenterY+42);
-        glEnd();
-	
-
-        glBegin(GL_LINES);
-                glVertex2i(circleCenterX+20, circleCenterY-15);
-                glVertex2i(circleCenterX-42, circleCenterY-42);
-        glEnd();
-
-        glBegin(GL_LINES);
-                glVertex2i(circleCenterX+20, circleCenterY+15);
-                glVertex2i(VIEWPORT_MIN+100, VIEWPORT_MAX-175);
-        glEnd();
-
-        glBegin(GL_LINES);
-                glVertex2i(circleCenterX+20, circleCenterY-15);
-                glVertex2i(VIEWPORT_MIN+100, VIEWPORT_MIN+160);
-        glEnd();
-
-        glBegin(GL_LINES);
-                glVertex2i(VIEWPORT_MIN+100, VIEWPORT_MAX-175);
-                glVertex2i(VIEWPORT_MIN+100, VIEWPORT_MIN+160);
-        glEnd();
-
+	glBegin(GL_LINES);
+		glVertex2d(x1, y1);	
+		glVertex2d(x2, y2);
+	glEnd();
 	glFlush();
 
-	//add circle and Base Tree to Tree 		
+	vert1.x = x1; vert1.y = y1; vert1.z = 0; vert1.w = 0;
+	vert2.x = x2; vert2.y = y2; vert2.z = 0; vert2.w = 0;
+	
+	baseTree.myBasePoints.push_back(vert1);
+	baseTree.myBasePoints.push_back(vert2);
+//	baseTree.numBasePoints+=2;
+	//PUSHBACK TO A VECTOR
+
+}
+void drawTree()
+{
+
+	//define circle info HERE!!!
+	double circleCenterX = VIEWPORT_MAX-100;
+	double circleCenterY = VIEWPORT_MAX-200;
+	double circleRadius = 60;
+	
+	midpointCircle(circleCenterX, circleCenterY, circleRadius);
+	
+	drawTreeLines(circleCenterX+20, circleCenterY+15, circleCenterX-42, circleCenterY+42);	
+      
+	drawTreeLines(circleCenterX+20, circleCenterY-15, circleCenterX-42, circleCenterY-42);
+        
+	drawTreeLines(circleCenterX+20, circleCenterY+15, VIEWPORT_MIN+100, VIEWPORT_MAX-175);
+        
+	drawTreeLines(circleCenterX+20, circleCenterY-15, VIEWPORT_MIN+100, VIEWPORT_MIN+160);
+
+        drawTreeLines(VIEWPORT_MIN+100, VIEWPORT_MAX-175, VIEWPORT_MIN+100, VIEWPORT_MIN+160);
+
+	//ADD CIRCLE AND BASE TO TREE HERE!!!
+	myTree.myCircle = circle;
+	myTree.myBaseTree = baseTree;
+ 		
 }
 
 void display(void)
@@ -191,12 +192,12 @@ void buildTranslateMatrix(vector<double> translateVec, double x, double y, doubl
 {
 	translateVec.push_back(1.0);	translateVec.push_back(0.0);	translateVec.push_back(0.0); 	translateVec.push_back(x);
 	translateVec.push_back(0.0); 	translateVec.push_back(1.0); 	translateVec.push_back(0.0);	translateVec.push_back(y);
-	translateVec.push_back(0.0);	translateVec.push_back(0.0);	traslateVec.push_back(1.0);	translateVec.push_back(z);	
+	translateVec.push_back(0.0);	translateVec.push_back(0.0);	translateVec.push_back(1.0);	translateVec.push_back(z);	
 	translateVec.push_back(0.0);	translateVec.push_back(0.0);	translateVec.push_back(0.0);	translateVec.push_back(1.0);
 }
 
 //build rotation matrix that does a rotation about the z axis; based on angle passed in
-void buildRotationMatrix(double thetha, vector<double> rotateVec)
+void buildRotationMatrix(double theta, vector<double> rotateVec)
 {
 	double angle = (theta*M_PI)/180.0; //convert angle to radians
 	
@@ -217,32 +218,45 @@ void buildScaleMatrix(double increaseScale, vector<double> scaleVec)
 	scaleVec.push_back(0.0);		scaleVec.push_back(0.0);	scaleVec.push_back(0.0);	scaleVec.push_back(1.0);
 }
 
+//mouse function
 void mouse(int button, int state, int x, int y)
 {
 	//if mouse inside of viewport
+    y = WINDOW_MAX-y;
+    if (x>VIEWPORT_MIN && x<VIEWPORT_MAX && y > VIEWPORT_MIN && y < VIEWPORT_MAX)
+    {
 	if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 	{
 		//increase speed of rotation
+		cout << "INSIDE VIEWPORT LEFT" << endl;
 	}
 
-	if(button == GLUT_RIGHT_DOWN && state == GLUT_DOWN)
+	if(button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
 	{
 		//slow down rotation
+		cout << "INSIDE VIEWPORT RIGHT" << endl;
 	}
-
+    }
+	//NOT WORKING!!!
 	//else if mouse is outside viewport
-	if(button == GLUT_LEFT_DOWN && state == GLUT_DOWN)
+    else if(x > VIEWPORT_MAX &&  x < WINDOW_MAX && y< VIEWPORT_MIN && y > WINDOW_MIN)
+    {
+	if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 	{
 		//increase scale of tree
+		cout << "OUTSIDE VIEWPORT LEFT" << endl;
 	}
 	
-	if(button == GLUT_RIGHT_DOWN && state == GLUT_DOWN)
+	if(button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
 	{
 		//decrease scale of tree
-	}		
+		cout << "OUTSIDE VIEWPORT RIGHT" << endl;
+	}
+    }		
 }
 
-void keyboard(unsigned char key, int x, int y)
+//keyboard function 
+/*void keyboard(unsigned char key, int x, int y)
 {
 	switch(tolower(key))
 	{
@@ -260,14 +274,14 @@ void keyboard(unsigned char key, int x, int y)
 		case 'i' : //stop animation, return to original position
 			break;
 	}
-}
+}*/
 
 int main(int argc, char** argv)
 {
 	myglutInit(argc, argv);
 	myInit();
 	glutMouseFunc(mouse);
-	glutKeyboardFunc(keyboard);
+	//glutKeyboardFunc(keyboard);
 	glutDisplayFunc(display);
 	glutMainLoop();
 }
