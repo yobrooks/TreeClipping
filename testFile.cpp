@@ -16,7 +16,7 @@ const int VIEWPORT_MIN = 100;
 
 //struct declarations
 struct Vertex{
-	double x, y, z, w;
+	double x, y, z;
 };
 
 struct Circle{
@@ -34,8 +34,6 @@ struct Tree{
 	BaseTree myBaseTree;
 };
 
-
-
 //const double circleCenterX = VIEWPORT_MAX-100;
 //const double circleCenterY = VIEWPORT_MAX-200;
 //const double circleRadius = 60;
@@ -43,7 +41,11 @@ struct Tree{
 //global variables
 Circle circle;
 BaseTree baseTree;
-Tree myTree;
+Tree tree;
+Vertex treeCenterPoint;
+Circle transformationCircle;
+BaseTree transformationBaseTree;
+Tree transformationTree;
 
 void myglutInit(int argc, char** argv)
 {
@@ -75,8 +77,7 @@ void plotPoint(double x, double y)
 	Vertex vertex;
 	vertex.x = x;
 	vertex.y = y;
-	vertex.z = 0;
-	vertex.w = 0;
+	vertex.z = 1;
 	
 	circle.myCircPoints.push_back(vertex);
 //	circle.numCircPoints ++;
@@ -142,15 +143,14 @@ void drawTreeLines(double x1, double y1, double x2, double y2)
 	glEnd();
 	glFlush();
 
-	vert1.x = x1; vert1.y = y1; vert1.z = 0; vert1.w = 0;
-	vert2.x = x2; vert2.y = y2; vert2.z = 0; vert2.w = 0;
+	vert1.x = x1; vert1.y = y1; vert1.z = 1;
+	vert2.x = x2; vert2.y = y2; vert2.z = 1;
 	
 	baseTree.myBasePoints.push_back(vert1);
 	baseTree.myBasePoints.push_back(vert2);
-//	baseTree.numBasePoints+=2;
-	//PUSHBACK TO A VECTOR
-
 }
+
+
 void drawTree()
 {
 
@@ -172,9 +172,19 @@ void drawTree()
         drawTreeLines(VIEWPORT_MIN+100, VIEWPORT_MAX-175, VIEWPORT_MIN+100, VIEWPORT_MIN+160);
 
 	//ADD CIRCLE AND BASE TO TREE HERE!!!
-	myTree.myCircle = circle;
-	myTree.myBaseTree = baseTree;
- 		
+	tree.myCircle = circle.myCircPoints;
+	tree.myBaseTree = baseTree.myBasePoints;
+ 	
+	//add tree center point 
+	treeCenterPoint.x = 315;
+	treeCenterPoint.y = 298;
+	treeCenterPoint.z = 1;
+	
+	glPointSize(10.0);
+	glBegin(GL_POINTS);
+		glVertex2d(treeCenterPoint.x, treeCenterPoint.y);
+	glEnd();
+	glFlush();
 }
 
 void display(void)
@@ -185,39 +195,125 @@ void display(void)
 	glRecti(VIEWPORT_MIN, VIEWPORT_MIN, VIEWPORT_MAX, VIEWPORT_MAX); 
 	
 	drawTree();
+	
 }
 
 //build translation matrix
-void buildTranslateMatrix(vector<double> translateVec, double x, double y, double z)
+Vertex translation(double xTrans, double yTrans, Vertex translationVert)
 {
-	translateVec.push_back(1.0);	translateVec.push_back(0.0);	translateVec.push_back(0.0); 	translateVec.push_back(x);
-	translateVec.push_back(0.0); 	translateVec.push_back(1.0); 	translateVec.push_back(0.0);	translateVec.push_back(y);
-	translateVec.push_back(0.0);	translateVec.push_back(0.0);	translateVec.push_back(1.0);	translateVec.push_back(z);	
-	translateVec.push_back(0.0);	translateVec.push_back(0.0);	translateVec.push_back(0.0);	translateVec.push_back(1.0);
+	Vertex returnVert;
+	returnVert.x = translationVert.x + (xTrans * translationVert.z);
+	returnVert.y = translationVert.y + (yTrans * translationVert.z);
+	returnVert.z = translationVert.z;
+
+	return returnVert;
 }
 
 //build rotation matrix that does a rotation about the z axis; based on angle passed in
-void buildRotationMatrix(double theta, vector<double> rotateVec)
+Vertex rotate(double theta, Vertex rotateVert)
 {
 	double angle = (theta*M_PI)/180.0; //convert angle to radians
+	Vertex returnVert;
+
+	returnVert.x = (rotateVert.x * cos(angle)) - (rotateVert.y * sin(angle));
+	returnVert.y = (rotateVert.x * sin(angle)) + (rotateVert.y * cos(angle));	
+	returnVert.z = rotateVert.z;	
 	
-	rotateVec.push_back(cos(angle));   rotateVec.push_back(-sin(angle));	rotateVec.push_back(0.0);	rotateVec.push_back(0.0);
-	rotateVec.push_back(sin(angle));   rotateVec.push_back(cos(angle));	rotateVec.push_back(0.0);	rotateVec.push_back(0.0);
-	rotateVec.push_back(0.0);	   rotateVec.push_back(0.0);		rotateVec.push_back(1.0);	rotateVec.push_back(0.0);
-	rotateVec.push_back(0.0);	   rotateVec.push_back(0.0);		rotateVec.push_back(0.0);	rotateVec.push_back(1.0); 
+	return returnVert;
 }
 
-//build Scale Matrix; based on scale factor passed in
-void buildScaleMatrix(double increaseScale, vector<double> scaleVec)
+//scale computation
+Vertex scale(double increaseScale, Vertex scaleVert)
 {
 	//make scale into a decimal from percentage
 	//increaseScale = increaseScale/100;
-	
-	scaleVec.push_back(increaseScale);	scaleVec.push_back(0.0);	scaleVec.push_back(0.0);	scaleVec.push_back(0.0);
-	scaleVec.push_back(0.0);	scaleVec.push_back(increaseScale);	scaleVec.push_back(0.0);	scaleVec.push_back(0.0);	   scaleVec.push_back(0.0);		   scaleVec.push_back(0.0);	 scaleVec.push_back(increaseScale); scaleVec.push_back(0.0);
-	scaleVec.push_back(0.0);		scaleVec.push_back(0.0);	scaleVec.push_back(0.0);	scaleVec.push_back(1.0);
+	Vertex returnVert;
+	returnVert.x = increaseScale * scaleVert.x;
+	returnVert.y = increaseScale * scaleVert.y;
+	returnVert.z = scaleVert.z;
+
+	return returnVert;
 }
 
+void applyRotation(double theta)
+{
+	Vertex tempVert;
+	vector<Vertex> transformationVector;
+	for(int i = 0; i < circle.myCircPoints.size(); i++)
+	{
+		tempVert = rotate(theta, circle.myCircPoints[i]);
+		transformationVector.push_back(tempVert);
+	}
+
+	transformationCircle.myCircPoints = transformationVector;
+	transformationVector.clear();
+	
+	for(int i = 0; i < baseTree.myBasePoints.size(); i++)
+	{
+		tempVert = rotate(theta, baseTree.myBasePoints[i]);
+		transformationVector.push_back(tempVert);
+	}	
+
+	transformationBaseTree.myBasePoints = transformationVector;
+	transformationVector.clear();
+}
+
+void applyScaling(double increaseScale)
+{
+	Vertex tempVert;
+	vector<Vertex> transformationVector;
+
+	for(int i = 0; i < circle.myCircPoints.size(); i++)
+	{
+		tempVert = scale(increaseScale, circle.myCircPoints[i]);
+		transformationVector.push_back(tempVert);
+	}
+
+	transformationCircle.myCircPoints = transformationVector;
+	transformationVector.clear();
+
+	for(int i = 0; i < baseTree.myBasePoints.size(); i++)
+	{
+		tempVert = scale(increaseScale, baseTree.myBasePoints[i]);
+		transformationVector.push_back(tempVert);
+	}
+
+	transformationBaseTree.myBasePoints = transformationVector;
+	transformationVector.clear();
+}
+
+void applyTranslation(double xTrans, double yTrans)
+{
+	Vertex tempVert;
+	vector<Vertex> transformationVector;
+
+	for(int i = 0; i < circle.myCircPoints.size(); i++)
+	{
+		tempVert = translate(double xTrans, double yTrans, circle.myCircPoints[i]);
+		transformationVector.push_back(tempVert);
+	}
+
+	transformationCircle.myCircPoints = transformationVector;
+	transformationVector.clear();
+	
+	for(int i = 0; i < baseTree.myBasePoints.size(); i++)
+	{
+		tempVert = translate(double xTrans, double yTrans, baseTree.myBasePoints[i]);
+		transformationVector.push_back(tempVert);
+	}
+
+	transformationBaseTree.myBasePoints = transformationVector;
+	transformationVector.clear();
+}
+
+void rotateShape()
+{
+	applyTranslation((treeCenterPoint.x * -1), (treeCenterPoint.y * -1));
+	applyRotation(10);
+	applyTranslation(treeCenterPoint.x, treeCenterPoint.y);
+}
+
+	
 //mouse function
 void mouse(int button, int state, int x, int y)
 {
@@ -228,6 +324,7 @@ void mouse(int button, int state, int x, int y)
 	if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 	{
 		//increase speed of rotation
+
 		cout << "INSIDE VIEWPORT LEFT" << endl;
 	}
 
