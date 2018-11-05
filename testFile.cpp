@@ -43,6 +43,7 @@ Circle circle;
 BaseTree baseTree;
 Tree tree;
 Vertex treeCenterPoint;
+bool stopAnimation = false;
 Circle transformationCircle;
 BaseTree transformationBaseTree;
 Tree transformationTree;
@@ -172,8 +173,8 @@ void drawTree()
         drawTreeLines(VIEWPORT_MIN+100, VIEWPORT_MAX-175, VIEWPORT_MIN+100, VIEWPORT_MIN+160);
 
 	//ADD CIRCLE AND BASE TO TREE HERE!!!
-	tree.myCircle = circle.myCircPoints;
-	tree.myBaseTree = baseTree.myBasePoints;
+	//tree.myCircle = circle.myCircPoints;
+	//tree.myBaseTree = baseTree.myBasePoints;
  	
 	//add tree center point 
 	treeCenterPoint.x = 315;
@@ -199,7 +200,7 @@ void display(void)
 }
 
 //build translation matrix
-Vertex translation(double xTrans, double yTrans, Vertex translationVert)
+Vertex translate(double xTrans, double yTrans, Vertex translationVert)
 {
 	Vertex returnVert;
 	returnVert.x = translationVert.x + (xTrans * translationVert.z);
@@ -289,7 +290,7 @@ void applyTranslation(double xTrans, double yTrans)
 
 	for(int i = 0; i < circle.myCircPoints.size(); i++)
 	{
-		tempVert = translate(double xTrans, double yTrans, circle.myCircPoints[i]);
+		tempVert = translate(xTrans, yTrans, circle.myCircPoints[i]);
 		transformationVector.push_back(tempVert);
 	}
 
@@ -298,7 +299,7 @@ void applyTranslation(double xTrans, double yTrans)
 	
 	for(int i = 0; i < baseTree.myBasePoints.size(); i++)
 	{
-		tempVert = translate(double xTrans, double yTrans, baseTree.myBasePoints[i]);
+		tempVert = translate(xTrans, yTrans, baseTree.myBasePoints[i]);
 		transformationVector.push_back(tempVert);
 	}
 
@@ -306,10 +307,10 @@ void applyTranslation(double xTrans, double yTrans)
 	transformationVector.clear();
 }
 
-void rotateShape()
+void rotateShape(double speed)
 {
 	applyTranslation((treeCenterPoint.x * -1), (treeCenterPoint.y * -1));
-	applyRotation(10);
+	applyRotation(speed);
 	applyTranslation(treeCenterPoint.x, treeCenterPoint.y);
 }
 
@@ -318,22 +319,31 @@ void rotateShape()
 void mouse(int button, int state, int x, int y)
 {
 	//if mouse inside of viewport
-    y = WINDOW_MAX-y;
+    	y = WINDOW_MAX-y;
+	double speed =0;
+
+if(stopAnimation==false){
     if (x>VIEWPORT_MIN && x<VIEWPORT_MAX && y > VIEWPORT_MIN && y < VIEWPORT_MAX)
     {
 	if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 	{
 		//increase speed of rotation
+		speed++;
+	//	cout << "INSIDE VIEWPORT LEFT" << endl;
+    		rotateShape(speed);
 
-		cout << "INSIDE VIEWPORT LEFT" << endl;
 	}
 
 	if(button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
 	{
+		speed--;
+		rotateShape(speed);
 		//slow down rotation
-		cout << "INSIDE VIEWPORT RIGHT" << endl;
+	//	cout << "INSIDE VIEWPORT RIGHT" << endl;
+
 	}
     }
+}
 	//NOT WORKING!!!
 	//else if mouse is outside viewport
     else if(x > VIEWPORT_MAX &&  x < WINDOW_MAX && y< VIEWPORT_MIN && y > WINDOW_MIN)
@@ -353,7 +363,7 @@ void mouse(int button, int state, int x, int y)
 }
 
 //keyboard function 
-/*void keyboard(unsigned char key, int x, int y)
+void keyboard(unsigned char key, int x, int y)
 {
 	switch(tolower(key))
 	{
@@ -366,19 +376,19 @@ void mouse(int button, int state, int x, int y)
 			break;
 		case 'r' : //reflect
 			break;
-		case 's' : //stop animation
+		case 's' : stopAnimation = true;
 			break;
 		case 'i' : //stop animation, return to original position
 			break;
 	}
-}*/
+}
 
 int main(int argc, char** argv)
 {
 	myglutInit(argc, argv);
 	myInit();
 	glutMouseFunc(mouse);
-	//glutKeyboardFunc(keyboard);
+	glutKeyboardFunc(keyboard);
 	glutDisplayFunc(display);
 	glutMainLoop();
 }
