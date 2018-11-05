@@ -44,6 +44,8 @@ BaseTree baseTree;
 Tree tree;
 Vertex treeCenterPoint;
 bool stopAnimation = false;
+bool initialized = false;
+int SPIN = 0;
 Circle transformationCircle;
 BaseTree transformationBaseTree;
 Tree transformationTree;
@@ -51,7 +53,7 @@ Tree transformationTree;
 void myglutInit(int argc, char** argv)
 {
 	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_SINGLE|GLUT_RGB); //change to double 
+	glutInitDisplayMode(GLUT_DOUBLE|GLUT_RGB); //change to double 
 	glutInitWindowSize(WINDOW_MAX, WINDOW_MAX);
 	glutInitWindowPosition(0,0);
 	glutCreateWindow("Tree");
@@ -72,7 +74,7 @@ void myInit(void)
 }
 
 //stores and draws point
-void plotPoint(double x, double y)
+void definePoint(double x, double y) //***********
 {
 	//store the point
 	Vertex vertex;
@@ -83,23 +85,23 @@ void plotPoint(double x, double y)
 	circle.myCircPoints.push_back(vertex);
 //	circle.numCircPoints ++;
 	//draw the point
-	glColor3f(0.0, 0.0, 1.0);
+/*	glColor3f(0.0, 0.0, 1.0);
 	glBegin(GL_POINTS);
 		glVertex2d(x, y);
-	glEnd();
+	glEnd();*/
 }
 
 //everything in octant 5 and 6 (with starting octant being 0) needs to not be drawn...
 //determine where the point will be in all eight octants
 void pointSymmetry(double xCord, double yCord, double x, double y)
 {
-	plotPoint(xCord + x, yCord + y);
-	plotPoint(xCord - x, yCord + y);
-	plotPoint(xCord + x, yCord - y);
-	plotPoint(xCord - x, yCord - y);
-	plotPoint(xCord + y, yCord + x);
+	definePoint(xCord + x, yCord + y); //***********
+	definePoint(xCord - x, yCord + y);
+	definePoint(xCord + x, yCord - y);
+	definePoint(xCord - x, yCord - y);
+	definePoint(xCord + y, yCord + x);
 	//plotPoint(xCord - y, yCord + x);
-	plotPoint(xCord+ y, yCord - x);
+	definePoint(xCord+ y, yCord - x);
 	//plotPoint(xCord - y, yCord - x);			
 }
 
@@ -113,7 +115,7 @@ void midpointCircle(double xCord, double yCord, double radius)
 
 	double p = (5/4) - radius;
 	
-	plotPoint(x, y);
+	definePoint(x, y); //**********
 	pointSymmetry(xCord, yCord, x, y);
 	
 	
@@ -134,15 +136,15 @@ void midpointCircle(double xCord, double yCord, double radius)
 	}
 }
 
-void drawTreeLines(double x1, double y1, double x2, double y2)
+void defineTreeLines(double x1, double y1, double x2, double y2)
 {
 	Vertex vert1, vert2;
-	glColor3f(0.0, 0.0, 1.0);
+	/*glColor3f(0.0, 0.0, 1.0);
 	glBegin(GL_LINES);
 		glVertex2d(x1, y1);	
 		glVertex2d(x2, y2);
 	glEnd();
-	glFlush();
+	glFlush();*/ //**************
 
 	vert1.x = x1; vert1.y = y1; vert1.z = 1;
 	vert2.x = x2; vert2.y = y2; vert2.z = 1;
@@ -152,7 +154,7 @@ void drawTreeLines(double x1, double y1, double x2, double y2)
 }
 
 
-void drawTree()
+void defineTree() //*********
 {
 
 	//define circle info HERE!!!
@@ -161,16 +163,16 @@ void drawTree()
 	double circleRadius = 60;
 	
 	midpointCircle(circleCenterX, circleCenterY, circleRadius);
-	
-	drawTreeLines(circleCenterX+20, circleCenterY+15, circleCenterX-42, circleCenterY+42);	
+	//***********
+	defineTreeLines(circleCenterX+20, circleCenterY+15, circleCenterX-42, circleCenterY+42);	
       
-	drawTreeLines(circleCenterX+20, circleCenterY-15, circleCenterX-42, circleCenterY-42);
+	defineTreeLines(circleCenterX+20, circleCenterY-15, circleCenterX-42, circleCenterY-42);
         
-	drawTreeLines(circleCenterX+20, circleCenterY+15, VIEWPORT_MIN+100, VIEWPORT_MAX-175);
+	defineTreeLines(circleCenterX+20, circleCenterY+15, VIEWPORT_MIN+100, VIEWPORT_MAX-175);
         
-	drawTreeLines(circleCenterX+20, circleCenterY-15, VIEWPORT_MIN+100, VIEWPORT_MIN+160);
+	defineTreeLines(circleCenterX+20, circleCenterY-15, VIEWPORT_MIN+100, VIEWPORT_MIN+160);
 
-        drawTreeLines(VIEWPORT_MIN+100, VIEWPORT_MAX-175, VIEWPORT_MIN+100, VIEWPORT_MIN+160);
+        defineTreeLines(VIEWPORT_MIN+100, VIEWPORT_MAX-175, VIEWPORT_MIN+100, VIEWPORT_MIN+160);
 
 	//ADD CIRCLE AND BASE TO TREE HERE!!!
 	//tree.myCircle = circle.myCircPoints;
@@ -181,21 +183,32 @@ void drawTree()
 	treeCenterPoint.y = 298;
 	treeCenterPoint.z = 1;
 	
-	glPointSize(10.0);
+/*	glPointSize(10.0);
 	glBegin(GL_POINTS);
 		glVertex2d(treeCenterPoint.x, treeCenterPoint.y);
 	glEnd();
-	glFlush();
+	glFlush();*/
 }
 
-void display(void)
+//draws the circle and tree //************
+void drawTree(Circle circleParam, BaseTree baseTreeParam)
 {
-	//draw viewport window in white
-	glClear(GL_COLOR_BUFFER_BIT);
-	glColor3f(1.0, 1.0, 1.0);
-	glRecti(VIEWPORT_MIN, VIEWPORT_MIN, VIEWPORT_MAX, VIEWPORT_MAX); 
-	
-	drawTree();
+	glColor3f(0.0f, 0.0f, 1.0f);
+
+	for(int i=0; i < circleParam.myCircPoints.size(); i++)
+	{
+		glBegin(GL_POINTS);
+			glVertex2d(circleParam.myCircPoints[i].x, circleParam.myCircPoints[i].y);
+		glEnd();
+	}
+
+	for(int i=0; i < baseTreeParam.myBasePoints.size()-1; i+=2)
+	{
+		glBegin(GL_LINES);
+			glVertex2d(baseTreeParam.myBasePoints[i].x, baseTreeParam.myBasePoints[i].y);
+			glVertex2d(baseTreeParam.myBasePoints[i+1].x, baseTreeParam.myBasePoints[i+1].y);
+		glEnd();
+	}
 	
 }
 
@@ -314,13 +327,44 @@ void rotateShape(double speed)
 	applyTranslation(treeCenterPoint.x, treeCenterPoint.y);
 }
 
+void display(void)
+{
+        //draw viewport window in white
+        glClear(GL_COLOR_BUFFER_BIT);
+        glColor3f(1.0, 1.0, 1.0);
+        glRecti(VIEWPORT_MIN, VIEWPORT_MIN, VIEWPORT_MAX, VIEWPORT_MAX);
+        if(initialized == false)
+       	{
+        	 defineTree();
+         	 initialized = true;
+        }
+
+        if(SPIN == 0)
+        {
+       		 drawTree(circle, baseTree);       
+	} 
+                   
+        if(SPIN != 0)
+	{     
+		   rotateShape((double) SPIN);                                                                                                                drawTree(transformationCircle, transformationBaseTree); 
+	}
+	                                                                                                                                           glutSwapBuffers();
+}
+void SpinDisplay(void)
+{
+	if(SPIN > 360)
+	{
+		SPIN = SPIN -360;
+	}
+
+	glutPostRedisplay();
+}
 	
 //mouse function
 void mouse(int button, int state, int x, int y)
 {
 	//if mouse inside of viewport
     	y = WINDOW_MAX-y;
-	double speed =0;
 
 if(stopAnimation==false){
     if (x>VIEWPORT_MIN && x<VIEWPORT_MAX && y > VIEWPORT_MIN && y < VIEWPORT_MAX)
@@ -328,16 +372,16 @@ if(stopAnimation==false){
 	if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 	{
 		//increase speed of rotation
-		speed++;
+		SPIN++;
+		glutIdleFunc(SpinDisplay);
 	//	cout << "INSIDE VIEWPORT LEFT" << endl;
-    		rotateShape(speed);
 
 	}
 
 	if(button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
 	{
-		speed--;
-		rotateShape(speed);
+		SPIN--;
+		glutIdleFunc(SpinDisplay);
 		//slow down rotation
 	//	cout << "INSIDE VIEWPORT RIGHT" << endl;
 
@@ -376,9 +420,10 @@ void keyboard(unsigned char key, int x, int y)
 			break;
 		case 'r' : //reflect
 			break;
-		case 's' : stopAnimation = true;
+		case 's' : stopAnimation = true; glutIdleFunc(display);
 			break;
-		case 'i' : //stop animation, return to original position
+		case 'i' : stopAnimation = true; SPIN = 0; glutIdleFunc(display);
+			 //stop animation, return to original position
 			break;
 	}
 }
