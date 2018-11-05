@@ -253,21 +253,23 @@ void applyRotation(double theta)
 {
 	Vertex tempVert;
 	vector<Vertex> transformationVector;
-	for(int i = 0; i < circle.myCircPoints.size(); i++)
+	for(int i = 0; i < transformationCircle.myCircPoints.size(); i++)
 	{
-		tempVert = rotate(theta, circle.myCircPoints[i]);
+		tempVert = rotate(theta, transformationCircle.myCircPoints[i]);
 		transformationVector.push_back(tempVert);
 	}
-
+	
+	transformationCircle.myCircPoints.clear();
 	transformationCircle.myCircPoints = transformationVector;
 	transformationVector.clear();
 	
-	for(int i = 0; i < baseTree.myBasePoints.size(); i++)
+	for(int i = 0; i < transformationBaseTree.myBasePoints.size(); i++)
 	{
-		tempVert = rotate(theta, baseTree.myBasePoints[i]);
+		tempVert = rotate(theta, transformationBaseTree.myBasePoints[i]);
 		transformationVector.push_back(tempVert);
 	}	
-
+	
+	transformationBaseTree.myBasePoints.clear();
 	transformationBaseTree.myBasePoints = transformationVector;
 	transformationVector.clear();
 }
@@ -277,21 +279,23 @@ void applyScaling(double increaseScale)
 	Vertex tempVert;
 	vector<Vertex> transformationVector;
 
-	for(int i = 0; i < circle.myCircPoints.size(); i++)
+	for(int i = 0; i < transformationCircle.myCircPoints.size(); i++)
 	{
-		tempVert = scale(increaseScale, circle.myCircPoints[i]);
+		tempVert = scale(increaseScale, transformationCircle.myCircPoints[i]);
 		transformationVector.push_back(tempVert);
 	}
 
+	transformationCircle.myCircPoints.clear();
 	transformationCircle.myCircPoints = transformationVector;
 	transformationVector.clear();
 
-	for(int i = 0; i < baseTree.myBasePoints.size(); i++)
+	for(int i = 0; i < transformationBaseTree.myBasePoints.size(); i++)
 	{
-		tempVert = scale(increaseScale, baseTree.myBasePoints[i]);
+		tempVert = scale(increaseScale, transformationBaseTree.myBasePoints[i]);
 		transformationVector.push_back(tempVert);
 	}
 
+	transformationBaseTree.myBasePoints.clear();
 	transformationBaseTree.myBasePoints = transformationVector;
 	transformationVector.clear();
 }
@@ -301,21 +305,23 @@ void applyTranslation(double xTrans, double yTrans)
 	Vertex tempVert;
 	vector<Vertex> transformationVector;
 
-	for(int i = 0; i < circle.myCircPoints.size(); i++)
+	for(int i = 0; i < transformationCircle.myCircPoints.size(); i++)
 	{
-		tempVert = translate(xTrans, yTrans, circle.myCircPoints[i]);
+		tempVert = translate(xTrans, yTrans, transformationCircle.myCircPoints[i]);
 		transformationVector.push_back(tempVert);
 	}
-
+	
+	transformationCircle.myCircPoints.clear();
 	transformationCircle.myCircPoints = transformationVector;
 	transformationVector.clear();
 	
-	for(int i = 0; i < baseTree.myBasePoints.size(); i++)
+	for(int i = 0; i < transformationBaseTree.myBasePoints.size(); i++)
 	{
-		tempVert = translate(xTrans, yTrans, baseTree.myBasePoints[i]);
+		tempVert = translate(xTrans, yTrans, transformationBaseTree.myBasePoints[i]);
 		transformationVector.push_back(tempVert);
 	}
 
+	transformationBaseTree.myBasePoints.clear();
 	transformationBaseTree.myBasePoints = transformationVector;
 	transformationVector.clear();
 }
@@ -336,6 +342,8 @@ void display(void)
         if(initialized == false)
        	{
         	 defineTree();
+		 transformationCircle.myCircPoints = circle.myCircPoints;
+		 transformationBaseTree.myBasePoints = baseTree.myBasePoints;
          	 initialized = true;
         }
 
@@ -390,7 +398,7 @@ if(stopAnimation==false){
 }
 	//NOT WORKING!!!
 	//else if mouse is outside viewport
-    else if(x > VIEWPORT_MAX &&  x < WINDOW_MAX && y< VIEWPORT_MIN && y > WINDOW_MIN)
+    else
     {
 	if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 	{
