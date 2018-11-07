@@ -34,10 +34,6 @@ struct Tree{
 	BaseTree myBaseTree;
 };
 
-//const double circleCenterX = VIEWPORT_MAX-100;
-//const double circleCenterY = VIEWPORT_MAX-200;
-//const double circleRadius = 60;
-
 //global variables
 Circle circle;
 BaseTree baseTree;
@@ -182,12 +178,6 @@ void defineTree() //*********
 	treeCenterPoint.x = 315;
 	treeCenterPoint.y = 298;
 	treeCenterPoint.z = 1;
-	
-/*	glPointSize(10.0);
-	glBegin(GL_POINTS);
-		glVertex2d(treeCenterPoint.x, treeCenterPoint.y);
-	glEnd();
-	glFlush();*/
 }
 
 //draws the circle and tree //************
@@ -240,10 +230,10 @@ Vertex rotate(double theta, Vertex rotateVert)
 Vertex scale(double increaseScale, Vertex scaleVert)
 {
 	//make scale into a decimal from percentage
-	//increaseScale = increaseScale/100;
+	increaseScale = increaseScale/100;
 	Vertex returnVert;
-	returnVert.x = increaseScale * scaleVert.x;
-	returnVert.y = increaseScale * scaleVert.y;
+	returnVert.x = (increaseScale * scaleVert.x) + scaleVert.x;
+	returnVert.y = (increaseScale * scaleVert.y) + scaleVert.y;
 	returnVert.z = scaleVert.z;
 
 	return returnVert;
@@ -333,6 +323,18 @@ void rotateShape(double speed)
 	applyTranslation(treeCenterPoint.x, treeCenterPoint.y);
 }
 
+void scaleShape(double scaleFactor)
+{
+	applyTranslation((treeCenterPoint.x * -1), (treeCenterPoint.y * -1));
+	applyScaling(scaleFactor);
+	applyTranslation(treeCenterPoint.x, treeCenterPoint.y);
+}
+
+void reflectShape()
+{
+	rotateShape(180);
+}
+
 void display(void)
 {
         //draw viewport window in white
@@ -346,18 +348,27 @@ void display(void)
 		 transformationBaseTree.myBasePoints = baseTree.myBasePoints;
          	 initialized = true;
         }
+//new stop
+	if(SPIN == 0 && stopAnimation == true)
+	{
+		drawTree(transformationCircle, transformationBaseTree);
+	}
 
-        if(SPIN == 0)
-        {
-       		 drawTree(circle, baseTree);       
-	} 
-                   
+//original
+	if(SPIN == 0 && stopAnimation == false)
+	{
+		drawTree(circle, baseTree);
+	}
+
+         
+//rotation          
         if(SPIN != 0)
 	{     
-		   rotateShape((double) SPIN);                                                                                                                drawTree(transformationCircle, transformationBaseTree); 
+		rotateShape((double) SPIN);                                                                                                                drawTree(transformationCircle, transformationBaseTree); 
 	}
 	                                                                                                                                           glutSwapBuffers();
 }
+
 void SpinDisplay(void)
 {
 	if(SPIN > 360)
@@ -367,14 +378,14 @@ void SpinDisplay(void)
 
 	glutPostRedisplay();
 }
-	
+
+		
 //mouse function
 void mouse(int button, int state, int x, int y)
 {
 	//if mouse inside of viewport
     	y = WINDOW_MAX-y;
 
-if(stopAnimation==false){
     if (x>VIEWPORT_MIN && x<VIEWPORT_MAX && y > VIEWPORT_MIN && y < VIEWPORT_MAX)
     {
 	if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
@@ -382,8 +393,6 @@ if(stopAnimation==false){
 		//increase speed of rotation
 		SPIN++;
 		glutIdleFunc(SpinDisplay);
-	//	cout << "INSIDE VIEWPORT LEFT" << endl;
-
 	}
 
 	if(button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
@@ -391,27 +400,25 @@ if(stopAnimation==false){
 		SPIN--;
 		glutIdleFunc(SpinDisplay);
 		//slow down rotation
-	//	cout << "INSIDE VIEWPORT RIGHT" << endl;
-
 	}
     }
-}
-	//NOT WORKING!!!
 	//else if mouse is outside viewport
     else
     {
 	if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 	{
 		//increase scale of tree
-		cout << "OUTSIDE VIEWPORT LEFT" << endl;
+		scaleShape(5);
+		glutIdleFunc(display);
 	}
 	
 	if(button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
 	{
-		//decrease scale of tree
-		cout << "OUTSIDE VIEWPORT RIGHT" << endl;
+		//decrease scale
+		scaleShape(-5);
+		glutIdleFunc(display);
 	}
-    }		
+    }	
 }
 
 //keyboard function 
@@ -426,11 +433,11 @@ void keyboard(unsigned char key, int x, int y)
 			break;
 		case 'l' : //back to initial outline
 			break;
-		case 'r' : //reflect
+		case 'r' : reflectShape(); glutIdleFunc(display); 
 			break;
-		case 's' : stopAnimation = true; glutIdleFunc(display);
+		case 's' : SPIN = 0; stopAnimation = true; glutIdleFunc(display);
 			break;
-		case 'i' : stopAnimation = true; SPIN = 0; glutIdleFunc(display);
+		case 'i' : SPIN = 0; stopAnimation = false; glutIdleFunc(display);
 			 //stop animation, return to original position
 			break;
 	}
