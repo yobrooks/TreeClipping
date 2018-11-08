@@ -67,7 +67,7 @@ void myInit(void)
 }
 
 //defines the point for the circle and stores it in the circle struct
-void definePoint(double x, double y) //***********
+void definePoint(double x, double y) 
 {
 	Vertex vertex;
 	vertex.x = x;
@@ -88,7 +88,7 @@ void pointSymmetry(double xCord, double yCord, double x, double y)
 	definePoint(xCord + x, yCord - y);
 	definePoint(xCord - x, yCord - y);
 	definePoint(xCord + y, yCord + x);
-	definePoint(xCord+ y, yCord - x);			
+	definePoint(xCord + y, yCord - x);			
 }
 
 //midpoint circle algorithm taken from pgs 150 - 153 of textbook 
@@ -324,6 +324,15 @@ void scaleShape(double scaleFactor)
 	applyTranslation(treeCenterPoint.x, treeCenterPoint.y);
 }
 
+void resetShape()
+{
+	SPIN = 0;
+	transformationCircle.myCircPoints.clear();
+	transformationCircle.myCircPoints = circle.myCircPoints;
+	transformationBaseTree.myBasePoints.clear();
+	transformationBaseTree.myBasePoints = baseTree.myBasePoints;
+}
+
 //what is to be displayed on the screen 
 void display(void)
 {
@@ -344,7 +353,8 @@ void display(void)
 
 	//if the animation has been stopped, and the spin is 0
 	//draw tree in the position it was in when it was stopped
-	if(SPIN == 0 && stopAnimation == true)
+	//if(SPIN == 0 && stopAnimation == true)
+	if(SPIN == 0)
 	{
 		drawTree(transformationCircle, transformationBaseTree);
 	}
@@ -352,10 +362,10 @@ void display(void)
 	//if the animation has not started and thus the spin is 0,
 	//draw the original tree in its original position
 	//also used to return the tree to its original position
-	if(SPIN == 0 && stopAnimation == false)
+	/*if(SPIN == 0 && stopAnimation == false)
 	{
-		drawTree(circle, baseTree);
-	}
+		drawTree(transformationCircle, transformationBaseTree);
+	}*/
 
          
 	//if the spin is not equal to 0, rotate the shape and draw the new one     
@@ -442,7 +452,7 @@ void keyboard(unsigned char key, int x, int y)
 			break; //rotate the shape by 180 degrees to produce a reflection
 		case 's' : SPIN = 0; stopAnimation = true; glutIdleFunc(display);
 			break; //stop animation where it is 
-		case 'i' : SPIN = 0; stopAnimation = false; glutIdleFunc(display);
+		case 'i' : resetShape(); glutIdleFunc(display);
 			 //stop animation, return to original position
 			break;
 	}
