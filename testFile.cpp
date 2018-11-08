@@ -43,7 +43,9 @@ int SPIN = 0; //angle of rotation
 //these hold the points that get transformed
 Circle transformationCircle; 
 BaseTree transformationBaseTree;
-
+vector<Vertex> clippingBounds; //change from being a global later
+Circle clipCirc;
+BaseTree baseClip;
 
 void myglutInit(int argc, char** argv)
 {
@@ -324,13 +326,119 @@ void scaleShape(double scaleFactor)
 	applyTranslation(treeCenterPoint.x, treeCenterPoint.y);
 }
 
-void resetShape()
-{
+//sets spin back to zero
+//clears and re-initializes the transformation vectors as having the same points as the original tree 
+void resetShape(){
+
 	SPIN = 0;
 	transformationCircle.myCircPoints.clear();
 	transformationCircle.myCircPoints = circle.myCircPoints;
 	transformationBaseTree.myBasePoints.clear();
 	transformationBaseTree.myBasePoints = baseTree.myBasePoints;
+}
+
+vector<Vertex> defineClipBounds()
+{
+	vector<Vertex> clippingBounds; //don't think this will end up needing to be returned
+	Vertex btLftCB={VIEWPORT_MIN, VIEWPORT_MIN};
+	Vertex btRgtCB={VIEWPORT_MAX, VIEWPORT_MIN};
+	Vertex tpRgtCB={VIEWPORT_MAX, VIEWPORT_MAX};
+	Vertex tpLftCB={VIEWPORT_MIN, VIEWPORT_MAX};
+	
+	clippingBounds.push_back(btLftCB); clippingBounds.push_back(btRgtCB); 
+	clippingBounds.push_back(tpRgtCB); clippingBounds.push_back(tpLftCB);
+	clippingBounds.push_back(btLftCB);
+
+	return clippingBounds;
+	
+}
+
+void intersect(Vertex first, Vertex second, Vertex clipBound1, Vertex clipBound2, Vertex pointIntersect)
+{
+  if(clipBound1.y == clipBound2.y)
+  {
+    pointIntersect.y = clipBound1.y;
+    pointIntersect.x = (first.x + (clipBound1.y - first.y)) * ((second.x - first.x)/(second.y - first.y));
+  }
+  
+  else
+  {
+    pointIntersect.x = clipBound1.x;
+    pointIntersect.y = (first.y + (clipBound1.x - first.x)) * ((second.y - first.y)/(second.x - first.x));
+  }
+}
+
+
+bool insideBound(Vertex vert, Vertex clipBound1, Vertex clipBound2)
+{
+  if(clipBound2.x > clipBound1.x){
+    if(vert.y >= clipBound1.y)  
+      return true;
+  }
+  
+  if(clipBound2.x < clipBound1.x){
+    if(vert.y <= clipBound1.y)
+      return true;
+  }
+  
+  if(clipBound2.y > clipBound1.y){
+    if(vert.x <= clipBound1.x)
+      return true;
+  }
+  
+  if(clipBound2.y < clipBound1.y){
+    if(vert.x >= clipBound1.x)
+      return true;
+  }
+  
+  return false;
+}
+
+void output(Vertex newVert, int outputLength, vector<Vertex> outputVec)
+{
+  outputVec.push_back(newVert);
+}
+
+void SHPolygonClip(vector<Vertex> inputVec, vector<Vertex> outputVec, Vertex clipBound1, Vertex clipBound2)
+{
+  Vertex a,b,c; 
+  
+  a = inputVec.back();
+  for(int i = 0; i < inputVec.size(); i++)
+  {
+    b = inputVec[i];
+    
+    if(insideBound(b, clipBound1, clipBound2)){
+      if(insideBound(a, clipBound1, clipBound2))
+        outputVec.push_back(b);
+      else{
+        intersect(a, b, clipBound1, clipBound2, c);
+        outputVec.push_back(c);
+        outputVec.push_back(b);
+      }
+    }
+    else if(insideBound(a, clipBound1, clipBound2))
+    {
+      intersect(a, b, clipBound1, clipBound2, c);
+      outputVec.push_back(c);
+    }
+    
+    a=b;
+  } //end for
+}
+
+void processPolyClip()
+{
+  
+  //vector<Vertex> outputCirc;
+ // vector<Vertex> outputBase;
+  
+  for(int i = 0; i < clippingBounds.size()-1; i+2)
+  {
+    SHPolygonClip(transformationCircle.myCircPoints, clipCirc.myCircPoints, clippingBounds[i], clippingBounds[i+1]);
+    SHPolygonClip(transformationBaseTree.myBasePoints, baseClip.myBasePoints, clippingBounds[i], clippingBounds[i+1]);
+  }
+  
 }
 
 //what is to be displayed on the screen 
@@ -341,38 +449,37 @@ void display(void)
         glColor3f(1.0, 1.0, 1.0);
         glRecti(VIEWPORT_MIN, VIEWPORT_MIN, VIEWPORT_MAX, VIEWPORT_MAX);
        
+
 	 //if the shape has not been initially drawn yet,
 	 //define the tree points, add them to the transformation structs as the initial points to start transformations from
 	 if(initialized == false)
        	 {
         	 defineTree();
+		 clippingBounds = defineClipBounds();
 		 transformationCircle.myCircPoints = circle.myCircPoints;
 		 transformationBaseTree.myBasePoints = baseTree.myBasePoints;
          	 initialized = true;
          }
-
-	//if the animation has been stopped, and the spin is 0
+	
+	 clipCirc.myCircPoints.clear();
+	 baseClip.myBasePoints.clear();
+	 
+	//if the spin is 0
 	//draw tree in the position it was in when it was stopped
-	//if(SPIN == 0 && stopAnimation == true)
 	if(SPIN == 0)
 	{
-		drawTree(transformationCircle, transformationBaseTree);
+		processPolyClip();
+		drawTree(clipCirc, baseClip);
 	}
-
-	//if the animation has not started and thus the spin is 0,
-	//draw the original tree in its original position
-	//also used to return the tree to its original position
-	/*if(SPIN == 0 && stopAnimation == false)
-	{
-		drawTree(transformationCircle, transformationBaseTree);
-	}*/
-
          
 	//if the spin is not equal to 0, rotate the shape and draw the new one     
 	//keeps updating until animation is stopped     
         if(SPIN != 0)
 	{     
-		rotateShape((double) SPIN);                                                                                                                drawTree(transformationCircle, transformationBaseTree); 
+		//CAN I PUT ROTATE ELSEWHERE???
+		rotateShape((double) SPIN);
+		processPolyClip();
+		drawTree(clipCirc, baseClip); 
 	}
 	                                                                                                                                           glutSwapBuffers();
 }
@@ -450,7 +557,7 @@ void keyboard(unsigned char key, int x, int y)
 			break;
 		case 'r' : rotateShape(180); glutIdleFunc(display); 
 			break; //rotate the shape by 180 degrees to produce a reflection
-		case 's' : SPIN = 0; stopAnimation = true; glutIdleFunc(display);
+		case 's' : SPIN = 0; glutIdleFunc(display);
 			break; //stop animation where it is 
 		case 'i' : resetShape(); glutIdleFunc(display);
 			 //stop animation, return to original position
