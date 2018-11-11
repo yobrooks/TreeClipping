@@ -13,7 +13,8 @@ const int VIEWPORT_MAX =500;
 const int VIEWPORT_MIN = 100;
 
 
-//struct declarations
+//*****struct declarations******//
+
 //vertex struct to hold the x, y position of a point 
 //and the z homogenous coordinate of the point
 struct Vertex{
@@ -30,23 +31,26 @@ struct BaseTree{
 	vector<Vertex> myBasePoints;	
 };
 
-//MAYBE TRY TO HAVE A VECTor WITH ALL THE POINTS ---IT MIGHT HELP GRAPHICS A BIT SO it won't be doing the circle then the base
 
-//global variables
+//****global variables****//
+
 //these hold the original points
 Circle circle;
 BaseTree baseTree;
-Vertex treeCenterPoint; 
+Vertex treeCenterPoint; //vertex to hold the center point of the tree
+
 bool stopAnimation = false; //boolean to determine when the animation of rotation needs to be stopped
 bool initialized = false; //boolean to tell whether the tree has been defined initially yet
 int SPIN = 0; //angle of rotation
+
 //these hold the points that get transformed
 Circle transformationCircle; 
 BaseTree transformationBaseTree;
-vector<Vertex> clippingBounds; //change from being a global later
-Circle clipCirc;
-BaseTree baseClip;
 
+//vector to hold the clipping window edges
+vector<Vertex> clippingBounds; 
+
+//*****Initializer Funcs*****//
 void myglutInit(int argc, char** argv)
 {
 	glutInit(&argc, argv);
@@ -321,6 +325,7 @@ void rotateShape(double speed)
 //ans translating back to original position
 void scaleShape(double scaleFactor)
 {
+
 	applyTranslation((treeCenterPoint.x * -1), (treeCenterPoint.y * -1));
 	applyScaling(scaleFactor);
 	applyTranslation(treeCenterPoint.x, treeCenterPoint.y);
@@ -328,7 +333,8 @@ void scaleShape(double scaleFactor)
 
 //sets spin back to zero
 //clears and re-initializes the transformation vectors as having the same points as the original tree 
-void resetShape(){
+void resetShape()
+{
 
 	SPIN = 0;
 	transformationCircle.myCircPoints.clear();
@@ -337,109 +343,19 @@ void resetShape(){
 	transformationBaseTree.myBasePoints = baseTree.myBasePoints;
 }
 
-vector<Vertex> defineClipBounds()
+//define the window boundaries for clipping
+void defineClipEdges()
 {
-	vector<Vertex> clippingBounds; //don't think this will end up needing to be returned
-	Vertex btLftCB={VIEWPORT_MIN, VIEWPORT_MIN};
-	Vertex btRgtCB={VIEWPORT_MAX, VIEWPORT_MIN};
-	Vertex tpRgtCB={VIEWPORT_MAX, VIEWPORT_MAX};
-	Vertex tpLftCB={VIEWPORT_MIN, VIEWPORT_MAX};
-	
-	clippingBounds.push_back(btLftCB); clippingBounds.push_back(btRgtCB); 
-	clippingBounds.push_back(tpRgtCB); clippingBounds.push_back(tpLftCB);
-	clippingBounds.push_back(btLftCB);
+	Vertex btLftCB = { VIEWPORT_MIN, VIEWPORT_MIN };
+	Vertex btRgtCB = { VIEWPORT_MAX, VIEWPORT_MIN };
+	Vertex tpRgtCB = { VIEWPORT_MAX, VIEWPORT_MAX };
+	Vertex tpLftCB = { VIEWPORT_MIN, VIEWPORT_MAX };
 
-	return clippingBounds;
-	
+	clippingBounds.push_back(tpLftCB); clippingBounds.push_back(tpRgtCB);
+	clippingBounds.push_back(btRgtCB); clippingBounds.push_back(btLftCB);
+	clippingBounds.push_back(tpLftCB);
 }
-
-void intersect(Vertex first, Vertex second, Vertex clipBound1, Vertex clipBound2, Vertex pointIntersect)
-{
-  if(clipBound1.y == clipBound2.y)
-  {
-    pointIntersect.y = clipBound1.y;
-    pointIntersect.x = (first.x + (clipBound1.y - first.y)) * ((second.x - first.x)/(second.y - first.y));
-  }
-  
-  else
-  {
-    pointIntersect.x = clipBound1.x;
-    pointIntersect.y = (first.y + (clipBound1.x - first.x)) * ((second.y - first.y)/(second.x - first.x));
-  }
-}
-
-
-bool insideBound(Vertex vert, Vertex clipBound1, Vertex clipBound2)
-{
-  if(clipBound2.x > clipBound1.x){
-    if(vert.y >= clipBound1.y)  
-      return true;
-  }
-  
-  if(clipBound2.x < clipBound1.x){
-    if(vert.y <= clipBound1.y)
-      return true;
-  }
-  
-  if(clipBound2.y > clipBound1.y){
-    if(vert.x <= clipBound1.x)
-      return true;
-  }
-  
-  if(clipBound2.y < clipBound1.y){
-    if(vert.x >= clipBound1.x)
-      return true;
-  }
-  
-  return false;
-}
-
-void output(Vertex newVert, int outputLength, vector<Vertex> outputVec)
-{
-  outputVec.push_back(newVert);
-}
-
-void SHPolygonClip(vector<Vertex> inputVec, vector<Vertex> outputVec, Vertex clipBound1, Vertex clipBound2)
-{
-  Vertex a,b,c; 
-  
-  a = inputVec.back();
-  for(int i = 0; i < inputVec.size(); i++)
-  {
-    b = inputVec[i];
-    
-    if(insideBound(b, clipBound1, clipBound2)){
-      if(insideBound(a, clipBound1, clipBound2))
-        outputVec.push_back(b);
-      else{
-        intersect(a, b, clipBound1, clipBound2, c);
-        outputVec.push_back(c);
-        outputVec.push_back(b);
-      }
-    }
-    else if(insideBound(a, clipBound1, clipBound2))
-    {
-      intersect(a, b, clipBound1, clipBound2, c);
-      outputVec.push_back(c);
-    }
-    
-    a=b;
-  } //end for
-}
-
-void processPolyClip()
-{
-  
-  //vector<Vertex> outputCirc;
- // vector<Vertex> outputBase;
-  
-  for(int i = 0; i < clippingBounds.size()-1; i+2)
-  {
-    SHPolygonClip(transformationCircle.myCircPoints, clipCirc.myCircPoints, clippingBounds[i], clippingBounds[i+1]);
-    SHPolygonClip(transformationBaseTree.myBasePoints, baseClip.myBasePoints, clippingBounds[i], clippingBounds[i+1]);
-  }
-  
-}
+ 
 
 //what is to be displayed on the screen 
 void display(void)
@@ -455,33 +371,28 @@ void display(void)
 	 if(initialized == false)
        	 {
         	 defineTree();
-		 clippingBounds = defineClipBounds();
+		 defineClipEdges();
+		cout << "SIZE OF EDGES VEC " << clippingBounds.size() <<endl;
 		 transformationCircle.myCircPoints = circle.myCircPoints;
 		 transformationBaseTree.myBasePoints = baseTree.myBasePoints;
          	 initialized = true;
          }
 	
-	 clipCirc.myCircPoints.clear();
-	 baseClip.myBasePoints.clear();
-	 
 	//if the spin is 0
 	//draw tree in the position it was in when it was stopped
-	if(SPIN == 0)
-	{
-		processPolyClip();
-		drawTree(clipCirc, baseClip);
-	}
-         
 	//if the spin is not equal to 0, rotate the shape and draw the new one     
 	//keeps updating until animation is stopped     
+
+
         if(SPIN != 0)
 	{     
-		//CAN I PUT ROTATE ELSEWHERE???
-		rotateShape((double) SPIN);
-		processPolyClip();
-		drawTree(clipCirc, baseClip); 
+		rotateShape((double)SPIN);
 	}
-	                                                                                                                                           glutSwapBuffers();
+	
+
+	drawTree(transformationCircle, transformationBaseTree);
+
+        glutSwapBuffers();
 }
 
 void SpinDisplay(void)
@@ -490,7 +401,6 @@ void SpinDisplay(void)
 	{
 		SPIN = SPIN -360;
 	}
-
 	glutPostRedisplay();
 }
 
@@ -519,6 +429,8 @@ void mouse(int button, int state, int x, int y)
 		SPIN--;
 		glutIdleFunc(SpinDisplay);
 	}
+
+	rotateShape((double)SPIN);
     }
 
 	//else if mouse is outside viewport window
@@ -529,8 +441,7 @@ void mouse(int button, int state, int x, int y)
 		{
 			//increase scale of tree
 			scaleShape(5);
-			glutIdleFunc(display); 
-		
+			//glutIdleFunc(display); 
 		}		
 		
 		//if right button pressed
@@ -538,14 +449,18 @@ void mouse(int button, int state, int x, int y)
 		{	
 			//decrease scale of tree
 			scaleShape(-5);
-			glutIdleFunc(display);
+			//glutIdleFunc(display);
 		}
-    	}		
+    	}
+
+	glutPostRedisplay();
 }
 
 //keyboard function 
 void keyboard(unsigned char key, int x, int y)
 {
+//	 transformationBaseTree.myBasePoints = baseTree.myBasePoints; transformationCircle.myCircPoints = circle.myCircPoints;
+
 	switch(tolower(key))
 	{
 		case 'q' : exit(0);
@@ -555,7 +470,7 @@ void keyboard(unsigned char key, int x, int y)
 			break;
 		case 'l' : //back to initial outline
 			break;
-		case 'r' : rotateShape(180); glutIdleFunc(display); 
+		case 'r' : rotateShape(180); glutPostRedisplay();
 			break; //rotate the shape by 180 degrees to produce a reflection
 		case 's' : SPIN = 0; glutIdleFunc(display);
 			break; //stop animation where it is 
