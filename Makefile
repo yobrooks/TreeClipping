@@ -9,8 +9,7 @@ LIBDIRS = -L/usr/lib64
 INCDIRS = -I/usr/include
 LDLIBS = -lglut -lGL -lGLU -lX11 -lm
 
-.c:
-	$(CC) $@.c $(INCDIRS) $(LIBDIRS) $(LDLIBS) -o $@
+testFile:
+	$(C++) -o testFile testFile.o $(INCDIRS) $(LIBDIRS) $(LDLIBS)
 
-.cpp: 
-	$(C++) -O $@.cpp -g $(INCDIRS) $(LIBDIRS) $(LDLIBS) -o $@
+
